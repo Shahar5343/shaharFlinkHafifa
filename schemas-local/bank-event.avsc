@@ -1,0 +1,119 @@
+{
+  "type": "record",
+  "name": "BankEvent",
+  "namespace": "com.shahar.bank",
+  "doc": "Polymorphic event wrapper - allows multiple event types in a single Kafka topic",
+  "fields": [
+    {
+      "name": "metadata",
+      "type": {
+        "type": "record",
+        "name": "EventMetadata",
+        "fields": [
+          {
+            "name": "event_type",
+            "type": {
+              "type": "enum",
+              "name": "EventType",
+              "symbols": ["Transaction", "FraudReport"]
+            },
+            "doc": "Discriminator field for routing events in Flink"
+          }
+        ]
+      },
+      "doc": "Event metadata containing type information"
+    },
+    {
+      "name": "body",
+      "type": [
+        {
+          "type": "record",
+          "name": "Transaction",
+          "namespace": "com.shahar.bank",
+          "doc": "Banking transaction event - represents a single financial transaction",
+          "fields": [
+            {
+              "name": "id",
+              "type": "string",
+              "doc": "Unique transaction identifier (UUID format)"
+            },
+            {
+              "name": "transaction_type_id",
+              "type": "int",
+              "doc": "Type of transaction: 1=Deposit, 2=Withdrawal, 3=Transfer, 4=Payment, etc."
+            },
+            {
+              "name": "account_id",
+              "type": "string",
+              "doc": "Account performing the transaction (UUID format)"
+            },
+            {
+              "name": "bank_id",
+              "type": "string",
+              "doc": "Bank identifier (UUID format)"
+            },
+            {
+              "name": "amount_transferred",
+              "type": "double",
+              "doc": "Transaction amount in currency units (e.g., dollars)"
+            },
+            {
+              "name": "reason",
+              "type": "string",
+              "doc": "Transaction description or memo"
+            },
+            {
+              "name": "timestamp",
+              "type": "long",
+              "doc": "Event timestamp in milliseconds since epoch (for event-time processing)"
+            }
+          ]
+        },
+        {
+          "type": "record",
+          "name": "FraudReport",
+          "namespace": "com.shahar.bank",
+          "doc": "Fraud detection report from upstream fraud detection systems",
+          "fields": [
+            {
+              "name": "report_id",
+              "type": "string",
+              "doc": "Unique fraud report identifier (UUID format)"
+            },
+            {
+              "name": "fraud_chain_id",
+              "type": "string",
+              "doc": "Links related fraud events together - enables tracking coordinated fraud across multiple transactions (UUID format)"
+            },
+            {
+              "name": "transaction_id",
+              "type": "string",
+              "doc": "Reference to the suspicious transaction (UUID format)"
+            },
+            {
+              "name": "account_id",
+              "type": "string",
+              "doc": "Flagged account identifier (UUID format)"
+            },
+            {
+              "name": "bank_id",
+              "type": "string",
+              "doc": "Bank identifier (UUID format)"
+            },
+            {
+              "name": "risk_level",
+              "type": "string",
+              "doc": "Severity classification: LOW, MEDIUM, HIGH, or CRITICAL"
+            },
+            {
+              "name": "timestamp",
+              "type": "long",
+              "doc": "Report generation timestamp in milliseconds since epoch"
+            }
+          ]
+        }
+      ],
+      "doc": "Event payload - can be either Transaction or FraudReport (Avro union type)"
+    }
+  ]
+}

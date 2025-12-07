@@ -1,0 +1,43 @@
+{
+  "type": "record",
+  "name": "FraudReport",
+  "namespace": "com.shahar.bank",
+  "doc": "Fraud detection report from upstream fraud detection systems",
+  "fields": [
+    {
+      "name": "report_id",
+      "type": "string",
+      "doc": "Unique fraud report identifier (UUID format)"
+    },
+    {
+      "name": "fraud_chain_id",
+      "type": "string",
+      "doc": "Links related fraud events together - enables tracking coordinated fraud across multiple transactions (UUID format)"
+    },
+    {
+      "name": "transaction_id",
+      "type": "string",
+      "doc": "Reference to the suspicious transaction (UUID format)"
+    },
+    {
+      "name": "account_id",
+      "type": "string",
+      "doc": "Flagged account identifier (UUID format)"
+    },
+    {
+      "name": "bank_id",
+      "type": "string",
+      "doc": "Bank identifier (UUID format)"
+    },
+    {
+      "name": "risk_level",
+      "type": "string",
+      "doc": "Severity classification: LOW, MEDIUM, HIGH, or CRITICAL"
+    },
+    {
+      "name": "timestamp",
+      "type": "long",
+      "doc": "Report generation timestamp in milliseconds since epoch"
+    }
+  ]
+}

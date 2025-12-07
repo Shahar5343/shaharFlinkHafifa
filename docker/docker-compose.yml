@@ -1,0 +1,197 @@
+version: '3.8'
+
+services:
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    hostname: kafka
+    container_name: kafka
+    ports:
+      - "9092:9092" # External access (from your host machine)
+      - "9093:9093" # Internal access (between Docker containers)
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:9093'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+
+      # Listener Configuration
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,CONTROLLER://kafka:9093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+
+      # Cluster Configuration
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+      # Log Configuration
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk' # Fixed cluster ID for KRaft
+
+      # Auto-create topics (convenient for development, disable in production)
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_NUM_PARTITIONS: 3 # Default partitions for auto-created topics
+    networks:
+      - flink-network
+    healthcheck:
+      test: [ "CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.6.0
+    hostname: schema-registry
+    container_name: schema-registry
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      # Schema Registry Configuration
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka:29092'
+      SCHEMA_REGISTRY_LISTENERS: 'http://0.0.0.0:8081'
+
+      # Compatibility Settings
+      # IMPORTANT LEARNING POINT: Controls how schemas can evolve
+      # - BACKWARD: New schema can read old data (add optional fields)
+      # - FORWARD: Old schema can read new data (remove fields)
+      # - FULL: Both backward and forward compatible
+      # - NONE: No compatibility checks (dangerous!)
+      SCHEMA_REGISTRY_SCHEMA_COMPATIBILITY_LEVEL: 'BACKWARD'
+
+      # Performance Settings
+      SCHEMA_REGISTRY_KAFKASTORE_TOPIC: '_schemas'
+      SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR: 1
+      SCHEMA_REGISTRY_DEBUG: 'false'
+    networks:
+      - flink-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8081/subjects || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    hostname: kafka-ui
+    container_name: kafka-ui
+    depends_on:
+      kafka:
+        condition: service_healthy
+      schema-registry:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      # Kafka UI Configuration
+      KAFKA_CLUSTERS_0_NAME: 'local-kafka'
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: 'kafka:29092'
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: 'http://schema-registry:8081'
+
+      # UI Settings
+      DYNAMIC_CONFIG_ENABLED: 'true'
+      KAFKA_CLUSTERS_0_METRICS_PORT: 9092
+    networks:
+      - flink-network
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080 || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==============================================================================
+  # FLINK CLUSTER - JobManager (Coordinator)
+  # ==============================================================================
+  # WHAT: Flink JobManager - coordinates job execution and resource management
+  # WHY: Acts as the master node in the Flink cluster
+  # LEARNING POINT: JobManager handles scheduling, checkpointing, and recovery
+  jobmanager:
+    image: flink:2.0.1-java21
+    hostname: jobmanager
+    container_name: flink-jobmanager
+    depends_on:
+      kafka:
+        condition: service_healthy
+      schema-registry:
+        condition: service_healthy
+    ports:
+      - "8082:8081" # Flink Web UI (Note: 8081 is used by Schema Registry, so we use 8082)
+      - "6123:6123" # RPC port for TaskManager communication
+    command: jobmanager
+    environment:
+      # JobManager Configuration
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+
+      # JVM Settings for Java 21
+      - JAVA_HOME=C:/Program Files/Java/jdk-21
+
+      # Memory Configuration
+      - JOB_MANAGER_MEMORY_SIZE=1024m
+    volumes:
+      # Mount directory for uploading jobs
+      - ./jobs:/opt/flink/jobs
+      # Checkpoint storage (shared with TaskManagers)
+      - flink-checkpoints:/tmp/flink-checkpoints
+      # State backend storage
+      - flink-savepoints:/tmp/flink-savepoints
+    networks:
+      - flink-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8081/overview || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==============================================================================
+  # FLINK CLUSTER - TaskManager (Worker)
+  # ==============================================================================
+  # WHAT: Flink TaskManager - executes tasks and stores intermediate state
+  # WHY: Worker nodes that perform the actual data processing
+  # LEARNING POINT: You can scale TaskManagers horizontally for more parallelism
+  taskmanager:
+    image: flink:2.0.1-java21
+    hostname: taskmanager
+    container_name: flink-taskmanager
+    depends_on:
+      jobmanager:
+        condition: service_healthy
+    command: taskmanager
+    environment:
+      # TaskManager Configuration
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 4
+
+      # JVM Settings for Java 21
+      - JAVA_HOME=C:/Program Files/Java/jdk-21
+
+      # Memory Configuration
+      - TASK_MANAGER_MEMORY_SIZE=2048m
+    volumes:
+      # Checkpoint storage (shared with JobManager)
+      - flink-checkpoints:/tmp/flink-checkpoints
+      # State backend storage
+      - flink-savepoints:/tmp/flink-savepoints
+    networks:
+      - flink-network
+    # Scale TaskManagers by running: docker-compose up -d --scale taskmanager=3
+
+networks:
+  flink-network:
+    driver: bridge
+    name: flink-network
+
+volumes:
+  kafka-data:
+    driver: local
+  flink-checkpoints:
+    driver: local
+  flink-savepoints:
+    driver: local
