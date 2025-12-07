@@ -28,24 +28,29 @@ public class FlinkConfig implements Serializable {
     private static FlinkConfig instance;
 
     /**
-     * Private constructor - loads configuration from classpath
+     * WHAT: Private constructor for singleton pattern
+     * WHY: Loads configuration from application.properties
+     * HOW: Uses ClassLoader to find properties file on classpath
+     * 
+     * LEARNING POINT: Private constructor prevents external instantiation,
+     * ensuring only one instance exists (singleton pattern)
      */
     private FlinkConfig() {
-        properties = new Properties();
+        this.properties = new Properties();
         try (InputStream input = getClass().getClassLoader()
                 .getResourceAsStream("application.properties")) {
             if (input == null) {
-                throw new RuntimeException("Unable to find application.properties");
+                System.out.println("WARNING: application.properties not found. Using defaults.");
+            } else {
+                properties.load(input);
+                System.out.println("Configuration loaded from application.properties");
             }
-            properties.load(input);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load configuration", e);
+            System.err.println("ERROR: Failed to load application.properties: " + e.getMessage());
+            // Properties object is already initialized (empty), so defaults will be used
         }
     }
 
-    /**
-     * Get singleton instance
-     */
     public static synchronized FlinkConfig getInstance() {
         if (instance == null) {
             instance = new FlinkConfig();
