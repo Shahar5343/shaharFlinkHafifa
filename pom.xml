@@ -27,7 +27,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         
         <!-- Dependency Versions -->
-        <flink.version>2.0.1</flink.version>
+        <flink.version>2.1.0</flink.version>
         <scala.binary.version>2.12</scala.binary.version>
         <avro.version>1.11.3</avro.version>
         <confluent.version>7.6.0</confluent.version>
@@ -192,7 +192,7 @@
                 </configuration>
             </plugin>
 
-            <plugin>
+             <plugin>
                 <groupId>io.confluent</groupId>
                 <artifactId>kafka-schema-registry-maven-plugin</artifactId>
                 <version>${confluent.version}</version>
@@ -242,7 +242,7 @@
                     </execution>
                 </executions>
             </plugin>
-
+            
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>

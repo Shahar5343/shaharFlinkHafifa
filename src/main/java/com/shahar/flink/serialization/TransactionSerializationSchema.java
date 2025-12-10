@@ -1,5 +1,6 @@
 package com.shahar.flink.serialization;
 
+import com.shahar.bank.Transaction;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
@@ -10,16 +11,16 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AvroSerializationSchema<T> implements SerializationSchema<T> {
+public class TransactionSerializationSchema implements SerializationSchema<Transaction> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AvroSerializationSchema.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TransactionSerializationSchema.class);
 
     private final String schemaRegistryUrl;
     private final String topic;
     private transient KafkaAvroSerializer serializer;
     private transient SchemaRegistryClient schemaRegistryClient;
 
-    public AvroSerializationSchema(String schemaRegistryUrl, String topic) {
+    public TransactionSerializationSchema(String schemaRegistryUrl, String topic) {
         this.schemaRegistryUrl = schemaRegistryUrl;
         this.topic = topic;
     }
@@ -35,12 +36,12 @@ public class AvroSerializationSchema<T> implements SerializationSchema<T> {
 
         serializer = new KafkaAvroSerializer(schemaRegistryClient, config);
 
-        LOG.info("Initialized AvroSerializationSchema for topic '{}' with Schema Registry: {}",
+        LOG.info("Initialized TransactionSerializationSchema for topic '{}' with Schema Registry: {}",
                 topic, schemaRegistryUrl);
     }
 
     @Override
-    public byte[] serialize(T element) {
+    public byte[] serialize(Transaction element) {
         if (element == null) {
             return null;
         }
@@ -48,7 +49,7 @@ public class AvroSerializationSchema<T> implements SerializationSchema<T> {
         try {
             return serializer.serialize(topic, element);
         } catch (Exception e) {
-            LOG.error("Failed to serialize Avro object: {}", element, e);
+            LOG.error("Failed to serialize Transaction: {}", element, e);
             throw new RuntimeException("Serialization failed", e);
         }
     }

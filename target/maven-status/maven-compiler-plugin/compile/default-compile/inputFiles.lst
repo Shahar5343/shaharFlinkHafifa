@@ -1,4 +1,5 @@
 C:\Users\shaha\shaharFlinkHafifa\target\generated-sources\avro\com\shahar\bank\BankEvent.java
+C:\Users\shaha\shaharFlinkHafifa\src\main\java\com\shahar\flink\serialization\TransactionSerializationSchema.java
 C:\Users\shaha\shaharFlinkHafifa\target\generated-sources\avro\com\shahar\bank\FraudReport.java
 C:\Users\shaha\shaharFlinkHafifa\src\main\java\com\shahar\flink\serialization\AvroSerializationSchema.java
 C:\Users\shaha\shaharFlinkHafifa\src\main\java\com\shahar\flink\serialization\AvroDeserializationSchema.java
@@ -10,6 +11,7 @@ C:\Users\shaha\shaharFlinkHafifa\src\main\java\com\shahar\flink\functions\FraudD
 C:\Users\shaha\shaharFlinkHafifa\target\generated-sources\avro\com\shahar\bank\EventType.java
 C:\Users\shaha\shaharFlinkHafifa\src\main\java\com\shahar\flink\model\WindowMetrics.java
 C:\Users\shaha\shaharFlinkHafifa\src\main\java\com\shahar\flink\constants\FlinkConstants.java
+C:\Users\shaha\shaharFlinkHafifa\src\main\java\com\shahar\flink\serialization\FraudReportSerializationSchema.java
 C:\Users\shaha\shaharFlinkHafifa\src\main\java\com\shahar\flink\exception\ConfigurationException.java
 C:\Users\shaha\shaharFlinkHafifa\target\generated-sources\avro\com\shahar\flink\Alert.java
 C:\Users\shaha\shaharFlinkHafifa\src\main\java\com\shahar\flink\exception\FlinkJobException.java

@@ -1,7 +1,9 @@
 com\shahar\flink\exception\FlinkJobException.class
+com\shahar\flink\serialization\TransactionSerializationSchema.class
 com\shahar\flink\Alert.class
 com\shahar\flink\constants\FlinkConstants$SchemaRegistry.class
 com\shahar\flink\serialization\AvroDeserializationSchema.class
+com\shahar\bank\BankEvent.class
 com\shahar\bank\FraudReport.class
 com\shahar\flink\constants\FlinkConstants$KafkaConsumer.class
 com\shahar\flink\functions\EventRouter$2.class
@@ -15,6 +17,8 @@ com\shahar\bank\Transaction.class
 com\shahar\flink\StreamingJob.class
 com\shahar\flink\model\WindowMetrics.class
 com\shahar\flink\Alert$Builder.class
+com\shahar\bank\BankEvent$Builder.class
+com\shahar\flink\serialization\FraudReportSerializationSchema.class
 com\shahar\flink\constants\FlinkConstants$FraudDetection.class
 com\shahar\flink\serialization\AvroSerializationSchema.class
 com\shahar\flink\constants\FlinkConstants$SideOutputs.class
@@ -24,5 +28,6 @@ com\shahar\flink\constants\FlinkConstants$LogMessages.class
 com\shahar\flink\constants\FlinkConstants$OperatorNames.class
 com\shahar\bank\EventMetadata$Builder.class
 com\shahar\flink\constants\FlinkConstants.class
+com\shahar\bank\EventMetadata.class
 com\shahar\bank\EventType.class
 com\shahar\flink\exception\ConfigurationException.class

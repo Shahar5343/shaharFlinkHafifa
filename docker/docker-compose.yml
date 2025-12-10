@@ -110,7 +110,7 @@ services:
   # WHY: Acts as the master node in the Flink cluster
   # LEARNING POINT: JobManager handles scheduling, checkpointing, and recovery
   jobmanager:
-    image: flink:2.0.1-java21
+    image: flink:2.1.0-java21
     hostname: jobmanager
     container_name: flink-jobmanager
     depends_on:
@@ -155,7 +155,7 @@ services:
   # WHY: Worker nodes that perform the actual data processing
   # LEARNING POINT: You can scale TaskManagers horizontally for more parallelism
   taskmanager:
-    image: flink:2.0.1-java21
+    image: flink:2.1.0-java21
     hostname: taskmanager
     container_name: flink-taskmanager
     depends_on:
