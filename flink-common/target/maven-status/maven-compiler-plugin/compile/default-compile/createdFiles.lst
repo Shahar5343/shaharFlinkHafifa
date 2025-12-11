@@ -1,0 +1,10 @@
+com\shahar\flink\common\base\BaseConfig.class
+com\shahar\flink\common\base\AbstractFlinkJob.class
+com\shahar\flink\common\serde\AvroDeserializationSchemaFactory.class
+com\shahar\flink\common\utils\SqlUtils.class
+com\shahar\flink\common\connectors\KafkaSourceBuilder.class
+com\shahar\flink\common\serde\AvroSerializationSchemaFactory$AvroSerializationSchemaImpl.class
+com\shahar\flink\common\utils\WatermarkStrategyFactory.class
+com\shahar\flink\common\serde\AvroSerializationSchemaFactory.class
+com\shahar\flink\common\serde\AvroDeserializationSchemaFactory$AvroDeserializationSchemaImpl.class
+com\shahar\flink\common\connectors\KafkaSinkBuilder.class

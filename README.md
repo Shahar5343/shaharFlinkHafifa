@@ -294,6 +294,121 @@ fraud.threshold.transaction.count=10
 fraud.threshold.total.amount=10000.0
 ```
 
+## 🗃️ SQL-as-Code Architecture
+
+This project supports a production-grade **SQL-as-Code** pattern for Flink jobs, separating business logic (SQL) from execution framework (Java).
+
+### Why SQL-as-Code?
+
+**Traditional approach** (business logic in Java):
+- ❌ Requires Java recompilation for logic changes
+- ❌ Harder for data analysts to understand
+- ❌ Tight coupling between logic and framework
+
+**SQL-as-Code approach**:
+- ✅ Change business logic by editing SQL files
+- ✅ No Java recompilation needed
+- ✅ Same JAR runs different logic based on configuration
+- ✅ SQL is reviewable by data teams
+
+### Running SQL Jobs
+
+#### Example: Balance Aggregation Job
+
+```bash
+# Build the project
+mvn clean package
+
+# Run the GenericSqlJob (uses balance aggregation SQL)
+mvn exec:java -Dexec.mainClass="com.shahar.flink.jobs.sql.GenericSqlJob"
+
+# Or run the shaded JAR
+java -cp flink-jobs/target/flink-jobs-1.0-SNAPSHOT.jar \
+  com.shahar.flink.jobs.sql.GenericSqlJob
+```
+
+#### Configuration
+
+The SQL job reads configuration from `application.properties`:
+
+```properties
+# SQL files to execute (in order)
+sql.files=sql/balance_aggregation/01_source_transactions.sql,sql/balance_aggregation/02_sink_balances.sql,sql/balance_aggregation/03_logic_aggregation.sql
+
+# Job name
+sql.job.name=Balance Aggregation Job
+
+# Kafka topics
+balance.source.topic=transactions
+balance.sink.topic=account-balances
+balance.consumer.group.id=balance-aggregation-v1
+```
+
+#### What the Balance Aggregation Does
+
+1. **Reads transactions** from Kafka topic `transactions`
+2. **Groups by account_id**
+3. **Computes running balance** (SUM of amount_transferred)
+4. **Writes to Kafka** topic `account-balances` (upsert mode)
+
+#### Environment-Specific Configuration
+
+Change topics for different environments without recompiling:
+
+**Development** (`application-dev.properties`):
+```properties
+balance.source.topic=dev-transactions
+balance.sink.topic=dev-account-balances
+```
+
+**Production** (`application-prod.properties`):
+```properties
+balance.source.topic=prod-transactions
+balance.sink.topic=prod-account-balances
+```
+
+### Creating Your Own SQL Jobs
+
+1. **Create SQL files** in `flink-jobs/src/main/resources/sql/your_job/`:
+   ```sql
+   -- 01_source.sql
+   CREATE TABLE my_source (...) WITH ('connector' = 'kafka', ...);
+   
+   -- 02_sink.sql
+   CREATE TABLE my_sink (...) WITH ('connector' = 'kafka', ...);
+   
+   -- 03_logic.sql
+   INSERT INTO my_sink SELECT ... FROM my_source;
+   ```
+
+2. **Configure in application.properties**:
+   ```properties
+   sql.files=sql/your_job/01_source.sql,sql/your_job/02_sink.sql,sql/your_job/03_logic.sql
+   sql.job.name=Your Custom Job
+   ```
+
+3. **Run**:
+   ```bash
+   mvn exec:java -Dexec.mainClass="com.shahar.flink.jobs.sql.GenericSqlJob"
+   ```
+
+### SQL Template Variables
+
+SQL files support `${variable}` placeholders that are replaced at runtime from `application.properties`:
+
+```sql
+CREATE TABLE transactions (
+    ...
+) WITH (
+    'connector' = 'kafka',
+    'topic' = '${balance.source.topic}',  -- Replaced at runtime
+    'properties.bootstrap.servers' = '${kafka.bootstrap.servers}',
+    'value.avro-confluent.url' = '${schema.registry.url}'
+);
+```
+
+This enables **one SQL file** to work across **all environments**.
+
 ## 🧪 Testing Scenarios
 
 ### Scenario 1: Normal Activity (No Alert)
